@@ -209,7 +209,6 @@ namespace UnityEditor.Rendering.HighDefinition
                     serializedObject.ApplyModifiedProperties();
                     HDShaderUtils.ResetMaterialKeywords(material);
             }
-
         }
         //example migration method, remove it after first real migration
         //static void EmissiveIntensityToColor(Material material, ShaderID id)
