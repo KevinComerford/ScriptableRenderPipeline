@@ -20,6 +20,7 @@ namespace UnityEditor.Rendering.HighDefinition
     class MaterialReimporter : Editor
     {
         internal static bool s_NeedsSavingAssets = false;
+        internal static string s_HDRPVersion;
 
         [InitializeOnLoadMethod]
         static void ReimportAllMaterials()
@@ -27,11 +28,11 @@ namespace UnityEditor.Rendering.HighDefinition
             //This method is called at opening and when HDRP package change (update of manifest.json)
             //Check to see if the upgrader has been run for this project/HDRP version
             PackageManager.PackageInfo hdrpInfo = PackageManager.PackageInfo.FindForAssembly(Assembly.GetAssembly(typeof(HDRenderPipeline)));
-            var hdrpVersion = hdrpInfo.version;
+            s_HDRPVersion = hdrpInfo.version;
             var curUpgradeVersion = HDProjectSettings.packageVersionForMaterialUpgrade;
 
             bool firstInstallOfHDRP = curUpgradeVersion == HDProjectSettings.k_PackageFirstTimeVersionForMaterials;
-            if (curUpgradeVersion != hdrpVersion)
+            if (curUpgradeVersion != s_HDRPVersion)
             {
                 string[] guids = AssetDatabase.FindAssets("t:material", null);
 
@@ -43,23 +44,14 @@ namespace UnityEditor.Rendering.HighDefinition
 
                 string commandLineOptions = System.Environment.CommandLine;
                 bool inTestSuite = commandLineOptions.Contains("-testResults");
-                //prevent popup in test suite as there is no user to interact, no need to save in this case
-                if (!inTestSuite && (firstInstallOfHDRP || EditorUtility.DisplayDialog("High Definition Materials Migration",
+                // prevent popup in test suite as there is no user to interact, no need to save in this case
+                // Also, no need to ask again the user if we haven't saved the assets yet.
+                if (!s_NeedsSavingAssets && !inTestSuite && (firstInstallOfHDRP || EditorUtility.DisplayDialog("High Definition Materials Migration",
                     "Your current High Definition Render Pipeline requires a change that will update your Materials. In order to apply this update automatically, you need to save your Project. If you choose not to save your Project, you will need to re-import Materials manually, then save the Project.\n\nPlease note that downgrading from the High Definition Render Pipeline is not supported.",
                     "Save Project", "Not now")))
                 {
                     s_NeedsSavingAssets = true;
-                    //to prevent data loss, only update the saved version if user applied change
-                    HDProjectSettings.packageVersionForMaterialUpgrade = hdrpVersion;
                 }
-                else
-                {
-                    s_NeedsSavingAssets = false;
-                }
-            }
-            else
-            {
-                s_NeedsSavingAssets = false;
             }
         }
     }
@@ -77,8 +69,11 @@ namespace UnityEditor.Rendering.HighDefinition
             }
 
             AssetDatabase.SaveAssets();
+            //to prevent data loss, only update the saved version if user applied change and assets are written to
+            HDProjectSettings.packageVersionForMaterialUpgrade = MaterialReimporter.s_HDRPVersion;
 
             MaterialPostprocessor.s_ImportedAssetThatNeedSaving.Clear();
+            MaterialReimporter.s_NeedsSavingAssets = false;
         }
         static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
         {
