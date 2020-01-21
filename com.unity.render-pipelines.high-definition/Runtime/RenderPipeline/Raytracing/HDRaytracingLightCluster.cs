@@ -593,7 +593,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 lightData.specularDimmer = lightDistanceFade * (additionalLightData.affectSpecular ? additionalLightData.lightDimmer * hdCamera.frameSettings.specularGlobalDimmer : 0);
                 lightData.volumetricLightDimmer = lightDistanceFade * (additionalLightData.volumetricDimmer);
 
-                lightData.cookieMode = CookieMode.Clamp;
+                lightData.cookieMode = CookieMode.None;
                 lightData.contactShadowMask = 0;
                 lightData.cookieIndex = -1;
                 lightData.shadowIndex = -1;
@@ -619,10 +619,12 @@ namespace UnityEngine.Rendering.HighDefinition
                 {
                     // Projectors lights must always have a cookie texture.
                     // As long as the cache is a texture array and not an atlas, the 4x4 white texture will be rescaled to 128
+                    lightData.cookieMode = CookieMode.Clamp;
                     lightData.cookieScaleOffset = m_RenderPipeline.m_TextureCaches.lightCookieManager.Fetch2DCookie(cmd, Texture2D.whiteTexture);
                 }
                 else if (lightData.lightType == GPULightType.Rectangle && additionalLightData.areaLightCookie != null)
                 {
+                    lightData.cookieMode = CookieMode.Clamp;
                     lightData.cookieScaleOffset = m_RenderPipeline.m_TextureCaches.lightCookieManager.FetchAreaCookie(cmd, additionalLightData.areaLightCookie);
                 }
 
