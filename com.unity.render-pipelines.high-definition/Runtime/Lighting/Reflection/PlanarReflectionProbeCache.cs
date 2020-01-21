@@ -168,7 +168,7 @@ namespace UnityEngine.Rendering.HighDefinition
             }
             else // Either we add it to the atlas
                 if (!UpdatePlanarTexture(cmd, texture, ref scaleOffset))
-                    Debug.LogError("No more space in the planar reflection probe atlas");
+                    Debug.LogError("No more space in the planar reflection probe atlas. To solve this issue, increase the size of the Planar Reflection Probe Atlas in the HDRP settings.");
 
             return scaleOffset;
         }

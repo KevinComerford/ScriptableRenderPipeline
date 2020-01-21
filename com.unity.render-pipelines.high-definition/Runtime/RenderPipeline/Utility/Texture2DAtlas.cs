@@ -144,6 +144,9 @@ namespace UnityEngine.Rendering.HighDefinition
 
         static readonly Vector4 fullScaleOffset = new Vector4(1, 1, 0, 0);
 
+        // Maximum mip padding that can be applied to the textures in the atlas (1 << 10 = 1024 pixels)
+        public static readonly int maxMipLevelPadding = 10;
+
         public RTHandle AtlasTexture
         {
             get
