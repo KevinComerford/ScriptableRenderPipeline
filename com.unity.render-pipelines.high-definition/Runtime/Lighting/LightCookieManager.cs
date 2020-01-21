@@ -122,6 +122,8 @@ namespace UnityEngine.Rendering.HighDefinition
             // it will avoid additional copy of the whole mip chain into the atlas.
             int sourceWidth = m_CookieAtlas.AtlasTexture.rt.width;
             int sourceHeight = m_CookieAtlas.AtlasTexture.rt.height;
+            int viewportWidth = source.width;
+            int viewportHeight = source.height;
             int mipMapCount = 1 + Mathf.FloorToInt(Mathf.Log(Mathf.Max(source.width, source.height), 2));
 
             if (m_TempRenderTexture0 == null)
@@ -156,6 +158,7 @@ namespace UnityEngine.Rendering.HighDefinition
                     cmd.SetGlobalTexture(s_texSource, source);
                     cmd.SetGlobalInt(s_sourceMipLevel, 0);
                     cmd.SetRenderTarget(m_TempRenderTexture0, 0);
+                    cmd.SetViewport(new Rect(0, 0, viewportWidth, viewportHeight));
                     cmd.DrawProcedural(Matrix4x4.identity, m_MaterialFilterAreaLights, 0, MeshTopology.Triangles, 3, 1);
                 }
 
@@ -164,6 +167,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 for (int mipIndex=1; mipIndex < mipMapCount; mipIndex++)
                 {
                     {   // Perform horizontal blur
+                        viewportWidth = Mathf.Max(1, viewportWidth >> 1);
                         targetWidth = Mathf.Max(1, targetWidth  >> 1);
 
                         sourceSize.Set(sourceWidth, sourceHeight, 1.0f / sourceWidth, 1.0f / sourceHeight);
@@ -173,12 +177,14 @@ namespace UnityEngine.Rendering.HighDefinition
                         cmd.SetGlobalInt(s_sourceMipLevel, mipIndex-1);          // Use previous mip as source
                         cmd.SetGlobalVector(s_sourceSize, sourceSize);
                         cmd.SetRenderTarget(m_TempRenderTexture1, mipIndex-1);    // Temp texture is already 1 mip lower than source
+                        cmd.SetViewport(new Rect(0, 0, targetWidth, targetHeight));
                         cmd.DrawProcedural(Matrix4x4.identity, m_MaterialFilterAreaLights, 1, MeshTopology.Triangles, 3, 1);
                     }
 
                     sourceWidth = targetWidth;
 
                     {   // Perform vertical blur
+                        viewportHeight = Mathf.Max(1, viewportHeight >> 1);
                         targetHeight = Mathf.Max(1, targetHeight >> 1);
 
                         sourceSize.Set(sourceWidth, sourceHeight, 1.0f / sourceWidth, 1.0f / sourceHeight);
@@ -188,6 +194,7 @@ namespace UnityEngine.Rendering.HighDefinition
                         cmd.SetGlobalInt(s_sourceMipLevel, mipIndex-1);
                         cmd.SetGlobalVector(s_sourceSize, sourceSize);
                         cmd.SetRenderTarget(m_TempRenderTexture0, mipIndex);
+                        cmd.SetViewport(new Rect(0, 0, targetWidth, targetHeight));
                         cmd.DrawProcedural(Matrix4x4.identity, m_MaterialFilterAreaLights, 2, MeshTopology.Triangles, 3, 1);
                     }
 
@@ -236,7 +243,8 @@ namespace UnityEngine.Rendering.HighDefinition
             {
                 // Generate the mips
                 Texture filteredAreaLight = FilterAreaLightTexture(cmd, cookie);
-                m_CookieAtlas.BlitTexture(cmd, scaleBias, filteredAreaLight, new Vector4(1, 1, 0, 0), blitMips: true, overrideInstanceID: cookie.GetInstanceID());
+                Vector4 sourceScaleOffset = new Vector4(cookie.width / (float)atlasTexture.rt.width, cookie.height / (float)atlasTexture.rt.height, 0, 0);
+                m_CookieAtlas.BlitTexture(cmd, scaleBias, filteredAreaLight, sourceScaleOffset, blitMips: true, overrideInstanceID: cookie.GetInstanceID());
             }
 
             return scaleBias;
