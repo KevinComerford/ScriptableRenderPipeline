@@ -10,7 +10,6 @@ Shader "CoreResources/FilterAreaLightCookies"
         // SRP includes
         #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
         #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
-#pragma enable_d3d11_debug_symbols
 
         // Input Data
         TEXTURE2D( _SourceTexture );
