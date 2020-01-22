@@ -267,6 +267,9 @@ namespace UnityEngine.Rendering.HighDefinition
                     Light light = currentLight.gameObject.GetComponent<Light>();
                     if (light == null || !light.enabled) continue;
 
+                    // Reserve space in the cookie atlas
+                    m_RenderPipeline.ReserveCookieAtlasTexture(currentLight, light);
+
                     float lightRange = light.range;
                     m_LightVolumesCPUArray[realIndex].range = new Vector3(lightRange, lightRange, lightRange);
                     m_LightVolumesCPUArray[realIndex].position = currentLight.gameObject.transform.position;

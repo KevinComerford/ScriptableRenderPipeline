@@ -2121,7 +2121,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 }
                 
                 // Reserve the cookie resolution in the 2D atlas
-                ReserveCookieAtlasTexture(additionalData, light.light, processedData.gpuLightType);
+                ReserveCookieAtlasTexture(additionalData, light.light);
 
                 if (hasDebugLightFilter
                     && !debugLightFilter.IsEnabledFor(processedData.gpuLightType, additionalData.spotLightShape))
@@ -2580,41 +2580,25 @@ namespace UnityEngine.Rendering.HighDefinition
             return m_enableBakeShadowMask;
         }
 
-        void ReserveCookieAtlasTexture(HDAdditionalLightData hdLightData, Light light, GPULightType gpuLightType)
+        internal void ReserveCookieAtlasTexture(HDAdditionalLightData hdLightData, Light light)
         {
             // Note: light component can be null if a Light is used for shuriken particle lighting.
-            switch (gpuLightType)
+            switch (hdLightData.ComputeLightType(light))
             {
-                case GPULightType.Directional:
+                case HDLightType.Directional:
                     m_TextureCaches.lightCookieManager.ReserveSpace(hdLightData.surfaceTexture);
                     m_TextureCaches.lightCookieManager.ReserveSpace(light?.cookie);
                     break;
-                case GPULightType.Spot:
-                case GPULightType.ProjectorBox:
-                case GPULightType.ProjectorPyramid:
+                case HDLightType.Spot:
                     // Projectors lights must always have a cookie texture.
                     m_TextureCaches.lightCookieManager.ReserveSpace(light?.cookie ?? Texture2D.whiteTexture);
                     break;
-                case GPULightType.Rectangle:
-                    m_TextureCaches.lightCookieManager.ReserveSpace(hdLightData.areaLightCookie);
+                case HDLightType.Area:
+                    // Only rectnagles can have cookies
+                    if (hdLightData.areaLightShape == AreaLightShape.Rectangle)
+                        m_TextureCaches.lightCookieManager.ReserveSpace(hdLightData.areaLightCookie);
                     break;
             }
-        }
-
-        Vector2 GetCookieSize(Texture cookie)
-        {
-            CustomRenderTexture crt = cookie as CustomRenderTexture;
-            float width = cookie.width;
-            float height = cookie.height;
-
-            if ((crt != null && crt.dimension == TextureDimension.Cube) || cookie is Cubemap)
-            {
-                // Correct size for octahedral
-                width = Mathf.ClosestPowerOfTwo((int)Mathf.Sqrt(width * width * 6));
-                height = Mathf.ClosestPowerOfTwo((int)Mathf.Sqrt(height * width * 6));
-            }
-
-            return new Vector2(width, height);
         }
 
         internal void UpdateEnvLighCameraRelativetData(ref EnvLightData envLightData, Vector3 camPosWS)
