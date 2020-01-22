@@ -16,6 +16,7 @@ namespace UnityEngine.Rendering.HighDefinition
         internal static readonly int s_texSource = Shader.PropertyToID("_SourceTexture");
         internal static readonly int s_sourceMipLevel = Shader.PropertyToID("_SourceMipLevel");
         internal static readonly int s_sourceSize = Shader.PropertyToID("_SourceSize");
+        internal static readonly int s_uvLimits = Shader.PropertyToID("_UVLimits");
 
         internal const int k_MinCookieSize = 2;
 
@@ -173,9 +174,12 @@ namespace UnityEngine.Rendering.HighDefinition
                         sourceSize.Set(sourceWidth, sourceHeight, 1.0f / sourceWidth, 1.0f / sourceHeight);
                         targetSize.Set(targetWidth, targetHeight, 1.0f / targetWidth, 1.0f / targetHeight);
 
+                        Vector4 uvLimits = new Vector4(0, 0, viewportWidth / (float)sourceWidth, viewportHeight / (float)sourceHeight);
+
                         cmd.SetGlobalTexture(s_texSource, m_TempRenderTexture0);
                         cmd.SetGlobalInt(s_sourceMipLevel, mipIndex-1);          // Use previous mip as source
                         cmd.SetGlobalVector(s_sourceSize, sourceSize);
+                        cmd.SetGlobalVector(s_uvLimits, uvLimits);
                         cmd.SetRenderTarget(m_TempRenderTexture1, mipIndex-1);    // Temp texture is already 1 mip lower than source
                         cmd.SetViewport(new Rect(0, 0, targetWidth, targetHeight));
                         cmd.DrawProcedural(Matrix4x4.identity, m_MaterialFilterAreaLights, 1, MeshTopology.Triangles, 3, 1);
@@ -190,9 +194,12 @@ namespace UnityEngine.Rendering.HighDefinition
                         sourceSize.Set(sourceWidth, sourceHeight, 1.0f / sourceWidth, 1.0f / sourceHeight);
                         targetSize.Set(targetWidth, targetHeight, 1.0f / targetWidth, 1.0f / targetHeight);
 
+                        Vector4 uvLimits = new Vector4(0, 0, viewportWidth / (float)sourceWidth, viewportHeight / (float)sourceHeight);
+
                         cmd.SetGlobalTexture(s_texSource, m_TempRenderTexture1);
                         cmd.SetGlobalInt(s_sourceMipLevel, mipIndex-1);
                         cmd.SetGlobalVector(s_sourceSize, sourceSize);
+                        cmd.SetGlobalVector(s_uvLimits, uvLimits);
                         cmd.SetRenderTarget(m_TempRenderTexture0, mipIndex);
                         cmd.SetViewport(new Rect(0, 0, targetWidth, targetHeight));
                         cmd.DrawProcedural(Matrix4x4.identity, m_MaterialFilterAreaLights, 2, MeshTopology.Triangles, 3, 1);
