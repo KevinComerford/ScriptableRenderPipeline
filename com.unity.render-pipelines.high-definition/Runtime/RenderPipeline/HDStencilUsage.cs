@@ -10,6 +10,8 @@ namespace UnityEngine.Rendering.HighDefinition
     {
         Clear = 0,
 
+        // Note: first bit is free and can still be used by both phases.
+
         // --- Following bits are used before transparent rendering ---
 
         RequiresDeferredLighting    = (1 << 1),

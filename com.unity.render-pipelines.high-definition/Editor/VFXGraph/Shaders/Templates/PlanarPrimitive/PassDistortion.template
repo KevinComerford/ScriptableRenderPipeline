@@ -6,8 +6,8 @@ Pass
     // TODO: Use value from C# (Update GetStencilStateForDepthOrMV )
 	Stencil
 	{
-		WriteMask 4
-		Ref 4
+		WriteMask 4 // StencilUsage.DistortionVectors
+		Ref 4 // StencilUsage.DistortionVectors
 		Comp Always
 		Pass Replace
 	}
