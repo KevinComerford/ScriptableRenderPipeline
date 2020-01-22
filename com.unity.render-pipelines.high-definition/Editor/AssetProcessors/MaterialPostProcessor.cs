@@ -156,10 +156,6 @@ namespace UnityEditor.Rendering.HighDefinition
         // to bump all materials version...
         static readonly Action<Material, HDShaderUtils.ShaderID>[] k_Migrations = new Action<Material, HDShaderUtils.ShaderID>[]
         {
-            /* EmissiveIntensityToColor,
-             * SecondMigrationStep,
-             * ...
-             SpecularOcclusionMode  */
              StencilRefactor
         };
 
@@ -198,12 +194,7 @@ namespace UnityEditor.Rendering.HighDefinition
 
         static void StencilRefactor(Material material, HDShaderUtils.ShaderID id)
         {
-            if (id < HDShaderUtils.ShaderID.Count_All)
-            {
-                    var serializedObject = new SerializedObject(material);
-                    serializedObject.ApplyModifiedProperties();
-                    HDShaderUtils.ResetMaterialKeywords(material);
-            }
+            HDShaderUtils.ResetMaterialKeywords(material);
         }
         //example migration method, remove it after first real migration
         //static void EmissiveIntensityToColor(Material material, ShaderID id)
