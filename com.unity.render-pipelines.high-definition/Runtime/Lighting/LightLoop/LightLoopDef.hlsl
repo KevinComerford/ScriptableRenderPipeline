@@ -29,6 +29,9 @@ struct LightLoopContext
 #define SINGLE_PASS_CONTEXT_SAMPLE_REFLECTION_PROBES 0
 #define SINGLE_PASS_CONTEXT_SAMPLE_SKY 1
 
+#define PLANAR_ATLAS_SIZE _PlanarAtlasData.x
+#define PLANAR_ATLAS_RCP_MIP_PADDING _PlanarAtlasData.y
+
 // The EnvLightData of the sky light contains a bunch of compile-time constants.
 // This function sets them directly to allow the compiler to propagate them and optimize the code.
 EnvLightData InitSkyEnvLightData(int envIndex)
@@ -60,6 +63,17 @@ EnvLightData InitSkyEnvLightData(int envIndex)
 bool IsEnvIndexCubemap(int index)   { return index >= 0; }
 bool IsEnvIndexTexture2D(int index) { return index < 0; }
 
+// Clamp the UVs to avoid edge beelding caused by bilinear filtering on the edge of the atlas.
+float2 RemapUVForPlanarAtlas(float2 coord, float2 size, float lod)
+{
+    float2 scale = rcp(size + PLANAR_ATLAS_RCP_MIP_PADDING) * size;
+    float2 offset = 0.5 * (1.0 - scale);
+
+    // Avoid edge bleeding for texture when sampling with lod by clamping uvs:
+    float2 mipClamp = pow(2, lod) / (size * PLANAR_ATLAS_SIZE * 2);
+    return clamp(coord * scale + offset, mipClamp, 1 - mipClamp);
+}
+
 // Note: index is whatever the lighting architecture want, it can contain information like in which texture to sample (in case we have a compressed BC6H texture and an uncompressed for real time reflection ?)
 // EnvIndex can also be use to fetch in another array of struct (to  atlas information etc...).
 // Cubemap      : texCoord = direction vector
@@ -84,7 +98,8 @@ float4 SampleEnv(LightLoopContext lightLoopContext, int index, float3 texCoord, 
             // Apply atlas scale and offset
             float2 scale = _Env2DAtlasScaleOffset[index].xy;
             float2 offset = _Env2DAtlasScaleOffset[index].zw;
-            float2 atlasCoords = ndc.xy * scale + offset;
+            float2 atlasCoords = RemapUVForPlanarAtlas(ndc.xy, scale, lod);
+            atlasCoords = atlasCoords * scale + offset;
 
             color.rgb = SAMPLE_TEXTURE2D_LOD(_Env2DTextures, s_trilinear_clamp_sampler, atlasCoords, lod).rgb;
 #if UNITY_REVERSED_Z

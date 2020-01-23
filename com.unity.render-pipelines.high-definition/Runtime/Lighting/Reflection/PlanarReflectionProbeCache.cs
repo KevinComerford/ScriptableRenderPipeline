@@ -257,5 +257,17 @@ namespace UnityEngine.Rendering.HighDefinition
 
         internal static int GetMaxCacheSizeForWeightInByte(int weight, GraphicsFormat format)
             => PowerOfTwoTextureAtlas.GetMaxCacheSizeForWeightInByte(weight, true, format);
+        
+        internal Vector4 GetAtlasDatas()
+        {
+            float padding = Mathf.Pow(2.0f, m_TextureAtlas.mipPadding) * 2.0f;
+
+            return new Vector4(
+                m_TextureAtlas.AtlasTexture.rt.width,
+                padding / (float)m_TextureAtlas.AtlasTexture.rt.width,
+                0,
+                0
+            );
+        }
     }
 }

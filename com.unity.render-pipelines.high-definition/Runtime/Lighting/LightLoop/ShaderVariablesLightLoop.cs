@@ -30,6 +30,8 @@ namespace UnityEngine.Rendering.HighDefinition
 
         public Vector4 _CookieAtlasSize;
         public Vector4 _CookieAtlasData;
+        
+        public Vector4 _PlanarAtlasData;
 
         public float _MicroShadowOpacity;
 

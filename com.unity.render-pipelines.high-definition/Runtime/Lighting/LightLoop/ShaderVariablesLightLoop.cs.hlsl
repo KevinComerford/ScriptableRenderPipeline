@@ -26,6 +26,7 @@
     int _DirectionalShadowIndex;
     float4 _CookieAtlasSize;
     float4 _CookieAtlasData;
+    float4 _PlanarAtlasData;
     float _MicroShadowOpacity;
     float _DirectionalTransmissionMultiplier;
     uint _NumTileFtplX;
