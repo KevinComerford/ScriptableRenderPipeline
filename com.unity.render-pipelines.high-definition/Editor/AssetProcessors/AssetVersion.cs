@@ -5,6 +5,5 @@ namespace UnityEditor.Rendering.HighDefinition
     class AssetVersion : ScriptableObject
     {
         public int version;
-        public bool needsCheckout;
     }
 }

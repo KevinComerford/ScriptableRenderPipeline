@@ -19,14 +19,20 @@ namespace UnityEditor.Rendering.HighDefinition
 
     class MaterialReimporter : Editor
     {
+        internal static bool s_NeedsSavingAssets = false;
         internal static string s_HDRPVersion;
 
         [InitializeOnLoadMethod]
         static void ReimportAllMaterials()
         {
-            var curUpgradeVersion = HDProjectSettings.materialVersionForUpgrade;
+            //This method is called at opening and when HDRP package change (update of manifest.json)
+            //Check to see if the upgrader has been run for this project/HDRP version
+            PackageManager.PackageInfo hdrpInfo = PackageManager.PackageInfo.FindForAssembly(Assembly.GetAssembly(typeof(HDRenderPipeline)));
+            s_HDRPVersion = hdrpInfo.version;
+            var curUpgradeVersion = HDProjectSettings.packageVersionForMaterialUpgrade;
 
-            if (curUpgradeVersion != (MaterialPostprocessor.k_Migrations.Length - 1))
+            bool firstInstallOfHDRP = curUpgradeVersion == HDProjectSettings.k_PackageFirstTimeVersionForMaterials;
+            if (curUpgradeVersion != s_HDRPVersion)
             {
                 string[] guids = AssetDatabase.FindAssets("t:material", null);
 
@@ -35,57 +41,40 @@ namespace UnityEditor.Rendering.HighDefinition
                     var path = AssetDatabase.GUIDToAssetPath(asset);
                     AssetDatabase.ImportAsset(path);
                 }
-            }
 
-            EditorApplication.quitting += () =>
-            {
-                // On closing the editor we update the upgrade version. This means that if we the editor is not closed
-                // correctly then it will go through the upgrade cycle next time it opens. 
-                HDProjectSettings.materialVersionForUpgrade = MaterialPostprocessor.k_Migrations.Length;
-            };
-        }
-    }
-
-    class MaterialSaveProcessor : AssetModificationProcessor
-    {
-        static string[] OnWillSaveAssets(string[] assetPaths)
-        {
-            foreach(var asset in assetPaths)
-            {
-                if (!asset.ToLowerInvariant().EndsWith(".mat"))
-                    continue;
-
-                var material = (Material)AssetDatabase.LoadAssetAtPath(asset, typeof(Material));
-                if (!HDShaderUtils.IsHDRPShader(material.shader, upgradable: true))
-                    continue;
-
-                // We are in an HDRP material, so if it needed to migrate, before saving we check it out in the version control
-                var assetsAtPath = AssetDatabase.LoadAllAssetsAtPath(asset);
-                AssetVersion assetVersion = null;
-                foreach (var subAsset in assetsAtPath)
+                string commandLineOptions = System.Environment.CommandLine;
+                bool inTestSuite = commandLineOptions.Contains("-testResults");
+                // prevent popup in test suite as there is no user to interact, no need to save in this case
+                // Also, no need to ask again the user if we haven't saved the assets yet.
+                if (!s_NeedsSavingAssets && !inTestSuite && (firstInstallOfHDRP || EditorUtility.DisplayDialog("High Definition Materials Migration",
+                    "Your current High Definition Render Pipeline requires a change that will update your Materials. In order to apply this update automatically, you need to save your Project. If you choose not to save your Project, you will need to re-import Materials manually, then save the Project.\n\nPlease note that downgrading from the High Definition Render Pipeline is not supported.",
+                    "Save Project", "Not now")))
                 {
-                    if (subAsset.GetType() == typeof(AssetVersion))
-                    {
-                        assetVersion = subAsset as AssetVersion;
-                        break;
-                    }
-                }
-
-                if (assetVersion != null && assetVersion.needsCheckout)
-                {
-                    AssetDatabase.MakeEditable(asset);
-                    assetVersion.needsCheckout = false;
+                    s_NeedsSavingAssets = true;
                 }
             }
-
-            return assetPaths;
         }
     }
 
     class MaterialPostprocessor : AssetPostprocessor
     {
         internal static List<string> s_CreatedAssets = new List<string>();
+        internal static List<string> s_ImportedAssetThatNeedSaving = new List<string>();
 
+        static void SaveAssetsToDisk()
+        {
+            foreach (var asset in MaterialPostprocessor.s_ImportedAssetThatNeedSaving)
+            {
+                AssetDatabase.MakeEditable(asset);
+            }
+
+            AssetDatabase.SaveAssets();
+            //to prevent data loss, only update the saved version if user applied change and assets are written to
+            HDProjectSettings.packageVersionForMaterialUpgrade = MaterialReimporter.s_HDRPVersion;
+
+            MaterialPostprocessor.s_ImportedAssetThatNeedSaving.Clear();
+            MaterialReimporter.s_NeedsSavingAssets = false;
+        }
         static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
         {
             foreach (var asset in importedAssets)
@@ -146,10 +135,16 @@ namespace UnityEditor.Rendering.HighDefinition
 
                 if (wasUpgraded)
                 {
-                    assetVersion.needsCheckout = true;
                     EditorUtility.SetDirty(assetVersion);
+                    s_ImportedAssetThatNeedSaving.Add(asset);
                 }
             }
+
+            EditorApplication.update += () =>
+            {
+                if (Time.renderedFrameCount > 0 && MaterialReimporter.s_NeedsSavingAssets)
+                    SaveAssetsToDisk();
+            };
         }
 
         // Note: It is not possible to separate migration step by kind of shader
@@ -159,10 +154,9 @@ namespace UnityEditor.Rendering.HighDefinition
         // So we must have migration step that work on every materials at once.
         // Which also means that if we want to update only one shader, we need
         // to bump all materials version...
-        static internal Action<Material, HDShaderUtils.ShaderID>[] k_Migrations = new Action<Material, HDShaderUtils.ShaderID>[]
+        static readonly Action<Material, HDShaderUtils.ShaderID>[] k_Migrations = new Action<Material, HDShaderUtils.ShaderID>[]
         {
-             StencilRefactor,
-             DUMMY
+             StencilRefactor
         };
 
         #region Migrations
@@ -202,12 +196,6 @@ namespace UnityEditor.Rendering.HighDefinition
         {
             HDShaderUtils.ResetMaterialKeywords(material);
         }
-
-        static void DUMMY(Material material, HDShaderUtils.ShaderID id)
-        {
-            HDShaderUtils.ResetMaterialKeywords(material);
-        }
-
         //example migration method, remove it after first real migration
         //static void EmissiveIntensityToColor(Material material, ShaderID id)
         //{
