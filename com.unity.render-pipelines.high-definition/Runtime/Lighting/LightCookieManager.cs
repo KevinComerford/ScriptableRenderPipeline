@@ -214,7 +214,7 @@ namespace UnityEngine.Rendering.HighDefinition
             
             if (!m_CookieAtlas.RelayoutEntries())
             {
-                Debug.LogError($"No more space in the 2D Cookie Texture Atlas. To solve this issue, increase the size of the cookie atlas in the HDRP settings.");
+                Debug.LogError($"No more space in the 2D Cookie Texture Atlas. To solve this issue, increase the resolution of the cookie atlas in the HDRP settings.");
                 m_NoMoreSpace = true;
             }
         }
@@ -225,7 +225,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 return Vector4.zero;
 
             if (!m_CookieAtlas.IsCached(out var scaleBias, cookie) && !m_NoMoreSpace)
-                Debug.LogError($"2D Light cookie texture {cookie} can't be fetched without having reserved. Check LightLoop.ReserveCookieAtlasTexture");
+                Debug.LogError($"2D Light cookie texture {cookie} can't be fetched without having reserved. You can try to increase the cookie atlas resolution in the HDRP settings.");
 
             if (m_CookieAtlas.NeedsUpdate(cookie, false))
                 m_CookieAtlas.BlitTexture(cmd, scaleBias, cookie, new Vector4(1, 1, 0, 0), blitMips: false);
@@ -239,7 +239,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 return Vector4.zero;
 
             if (!m_CookieAtlas.IsCached(out var scaleBias, cookie) && !m_NoMoreSpace)
-                Debug.LogError($"Area Light cookie texture {cookie} can't be fetched without having reserved. Check LightLoop.ReserveCookieAtlasTexture");
+                Debug.LogError($"Area Light cookie texture {cookie} can't be fetched without having reserved. You can try to increase the cookie atlas resolution in the HDRP settings.");
 
             if (m_CookieAtlas.NeedsUpdate(cookie, true))
             {
