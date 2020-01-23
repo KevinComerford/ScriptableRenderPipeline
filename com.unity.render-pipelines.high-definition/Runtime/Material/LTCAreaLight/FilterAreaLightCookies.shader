@@ -42,7 +42,8 @@ Shader "CoreResources/FilterAreaLightCookies"
 
         float2 ClampUV(float2 uv)
         {
-            return clamp(uv, _UVLimits.xy, _UVLimits.zw);
+            // Clamp UVs to source size minus half pixel
+            return clamp(uv, _UVLimits.xy, _UVLimits.zw - _SourceSize.zw * 0.5);
         }
 
     ENDHLSL
