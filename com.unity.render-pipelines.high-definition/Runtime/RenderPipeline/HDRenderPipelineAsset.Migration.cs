@@ -21,10 +21,6 @@ namespace UnityEngine.Rendering.HighDefinition
             ShadowFilteringVeryHighQualityRemoval,
             SeparateColorGradingAndTonemappingFrameSettings,
             ReplaceTextureArraysByAtlasForCookieAndPlanar,
-
-            // Note: This must be updated each time we add a new version to the enum.
-            // The Last version is used when we create a new HDRP asset so it does not migrate.
-            Last = ReplaceTextureArraysByAtlasForCookieAndPlanar,
         }
 
         static readonly MigrationDescription<Version, HDRenderPipelineAsset> k_Migration = MigrationDescription.New(
@@ -106,7 +102,7 @@ namespace UnityEngine.Rendering.HighDefinition
         );
 
         [SerializeField]
-        Version m_Version = Version.Last;
+        Version m_Version = MigrationDescription.LastVersion<Version>();
         Version IVersionable<Version>.version { get => m_Version; set => m_Version = value; }
 
         void Awake() => k_Migration.Migrate(this);
