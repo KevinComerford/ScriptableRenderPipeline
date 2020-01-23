@@ -19,28 +19,28 @@ namespace UnityEditor.Rendering.HighDefinition
 
     class MaterialReimporter : Editor
     {
-        internal static string s_HDRPVersion;
+        static internal void ReimportAllMaterials()
+        {
+            string[] guids = AssetDatabase.FindAssets("t:material", null);
+
+            foreach (var asset in guids)
+            {
+                var path = AssetDatabase.GUIDToAssetPath(asset);
+                AssetDatabase.ImportAsset(path);
+            }
+
+            MaterialPostprocessor.s_NeedsSavingAssets = true;
+        }
 
         [InitializeOnLoadMethod]
-        static void ReimportAllMaterials()
+        static void ReimportAllMaterialsOnPackageChange()
         {
             //This method is called at opening and when HDRP package change (update of manifest.json)
-            //Check to see if the upgrader has been run for this project/HDRP version
-            PackageManager.PackageInfo hdrpInfo = PackageManager.PackageInfo.FindForAssembly(Assembly.GetAssembly(typeof(HDRenderPipeline)));
-            s_HDRPVersion = hdrpInfo.version;
             var curUpgradeVersion = HDProjectSettings.materialVersionForUpgrade;
 
             if (curUpgradeVersion != MaterialPostprocessor.k_Migrations.Length)
             {
-                string[] guids = AssetDatabase.FindAssets("t:material", null);
-
-                foreach (var asset in guids)
-                {
-                    var path = AssetDatabase.GUIDToAssetPath(asset);
-                    AssetDatabase.ImportAsset(path);
-                }
-
-                MaterialPostprocessor.s_NeedsSavingAssets = true;
+                ReimportAllMaterials();
             }
 
             EditorApplication.update += () =>
