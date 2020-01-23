@@ -328,6 +328,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed compilation issues on platform that don't support VR.
 - Fixed migration code called when we create a new HDRP asset.
 - Fixed an issue where ambient occlusion and screen space reflections editors would generate null ref exceptions when HDRP was not set as the current pipeline.
+- Fixed an issue where materials newly created from the contextual menu would have an invalid state, causing various problems until it was edited.
 
 ### Changed
 - Color buffer pyramid is not allocated anymore if neither refraction nor distortion are enabled
