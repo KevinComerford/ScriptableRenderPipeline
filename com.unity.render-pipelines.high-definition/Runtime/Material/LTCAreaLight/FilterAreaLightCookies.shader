@@ -71,7 +71,7 @@ Shader "CoreResources/FilterAreaLightCookies"
             HLSLPROGRAM
                 float4 frag(Varyings input) : SV_Target
                 {
-                    float2  UV = float2(input.texcoord.x, input.texcoord.y);
+                    float2  UV = float2(input.texcoord.x, input.texcoord.y) * _SourceSize.xy;
                     float   delta = DELTA_SCALE * _SourceSize.z;
                             UV.x -= 3.0 * delta;
 
@@ -96,7 +96,7 @@ Shader "CoreResources/FilterAreaLightCookies"
             HLSLPROGRAM
                 float4 frag(Varyings input) : SV_Target
                 {
-                    float2  UV = float2(input.texcoord.x, input.texcoord.y);
+                    float2  UV = float2(input.texcoord.x, input.texcoord.y) * _SourceSize.xy;
                     float   delta = DELTA_SCALE * _SourceSize.w;
                             UV.y -= 3.0 * delta;
 
